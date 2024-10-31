@@ -5,4 +5,9 @@ export interface ISlotSearchParams {
     region?: string;
     mandal?: string;
     wing?: string;
+    page?: string;
+    rowsPerPage?: string;
 }
+
+export const DefaultRowsPerPage = 10;
+export const DefaultPage = 1;
