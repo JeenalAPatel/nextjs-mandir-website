@@ -4,14 +4,13 @@ import {ISlotSearchParams} from "@/models/slots";
 
 
 export default async function Page(props: {
-    searchParams: Promise<ISlotSearchParams>
+    searchParams?: Promise<ISlotSearchParams>
 }) {
-    const searchParams = await props.searchParams
-
+const searchParams = await props.searchParams;
     return (
         <>
-            <SlotForm />
-            <SlotDataTable filter={searchParams} />
+            <SlotForm/>
+            <SlotDataTable filter={searchParams}/>
         </>
     );
 }

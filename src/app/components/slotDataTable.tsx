@@ -2,65 +2,72 @@ import {DataTable} from 'primereact/datatable';
 import {Column} from 'primereact/column';
 import {db} from '@/db';
 import {slots} from "@/db/schema";
-import {and, eq, gte, ilike, lte} from "drizzle-orm";
-import {ISlotSearchParams} from "@/models/slots";
+import {and, count, eq, gte, ilike, lte} from "drizzle-orm";
+import {DefaultPage, DefaultRowsPerPage, ISlotSearchParams} from "@/models/slots";
+import {SlotPaginator} from "@/app/slot/paginator";
 
-interface ISlotDataTableProps {
+
+export async function SlotDataTable(props: {
     filter?: ISlotSearchParams
-}
+}) {
+    const page = Number(props.filter?.page || `${DefaultPage}`);
+    const rowsPerPage = Number(props.filter?.rowsPerPage || `${DefaultRowsPerPage}`);
 
-export async function SlotDataTable(props: ISlotDataTableProps) {
-    let query = db.select().from(slots).$dynamic();
+    let slotCountSQL = db.select({count: count()}).from(slots).$dynamic();
+    let slotDataSQL = db.select().from(slots).$dynamic();
 
     if (props.filter) {
-        const {slot, startDate, endDate, region, mandal, wing} = props.filter;
-        const whereClauses = [];
-
-        if (slot) {
-            whereClauses.push(ilike(slots.slotName, `%${slot}%`));
+        const whereClause = [];
+        if (props.filter.slot) {
+            whereClause.push(ilike(slots.slotName, `%${props.filter.slot}%`));
         }
-        if (startDate) {
-            whereClauses.push(gte(slots.startDate, startDate));
+        if (props.filter.startDate) {
+            whereClause.push(gte(slots.startDate, props.filter.startDate));
         }
-        if (endDate) {
-            whereClauses.push(lte(slots.endDate, endDate));
+        if (props.filter.endDate) {
+            whereClause.push(lte(slots.endDate, props.filter.endDate));
         }
-        if (region) {
-            whereClauses.push(eq(slots.region, region));
+        if (props.filter.region) {
+            whereClause.push(eq(slots.region, props.filter.region));
         }
-        if (mandal) {
-            whereClauses.push(eq(slots.mandal, mandal));
+        if (props.filter.mandal) {
+            whereClause.push(eq(slots.mandal, props.filter.mandal));
         }
-        if (wing) {
-            whereClauses.push(eq(slots.wing, wing));
+        if (props.filter.wing) {
+            whereClause.push(eq(slots.wing, props.filter.wing));
         }
-
-        query = query.where(and(...whereClauses));
+        slotDataSQL = slotDataSQL.where(and(...whereClause));
+        slotCountSQL = slotCountSQL.where(and(...whereClause));
+        slotDataSQL = slotDataSQL.limit(rowsPerPage).offset((page - 1) * rowsPerPage);
     }
 
-    let data = await query.execute();
+    const slotCountResult = await slotCountSQL.execute();
+    let data = await slotDataSQL.execute();
 
-    data = data.map((slot) => ({
+    const slot = data.map((slot) => ({
         ...slot,
         startDate: (slot.startDate as unknown as Date).toLocaleDateString(),
         endDate: (slot.endDate as unknown as Date).toLocaleDateString()
     }));
 
-
     return (
-       <div>
-            <DataTable value={data} tableStyle={{minWidth: '50rem'}}>
-                <Column field="slotName" header="Slot Name"/>
-                <Column field="region" header="Region"/>
-                <Column field="wing" header="Wing"/>
-                <Column field="mandal" header="Mandal"/>
-                <Column field="capacity" header="Capacity"/>
-                <Column field="slotType" header="Slot Type"/>
-                <Column field="startDate" header="Start Date"/>
-                <Column field="endDate" header="End Date"/>
-                <Column field="notes" header="Notes"/>
-                <Column field="active" header="Active"/>
-            </DataTable>
-       </div>
+        <>
+            <div>
+                <DataTable value={slot} tableStyle={{minWidth: '50rem'}}>
+                    <Column field="slotName" header="Slot Name"/>
+                    <Column field="region" header="Region"/>
+                    <Column field="wing" header="Wing"/>
+                    <Column field="mandal" header="Mandal"/>
+                    <Column field="capacity" header="Capacity"/>
+                    <Column field="slotType" header="Slot Type"/>
+                    <Column field="startDate" header="Start Date"/>
+                    <Column field="endDate" header="End Date"/>
+                    <Column field="notes" header="Notes"/>
+                    <Column field="active" header="Active"/>
+                </DataTable>
+            </div>
+
+            <SlotPaginator page={page} rowsPerPage={rowsPerPage} totalRecords={slotCountResult[0].count}/>
+        </>
     );
 }

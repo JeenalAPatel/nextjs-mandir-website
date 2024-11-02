@@ -4,19 +4,23 @@ import {mandals, regions, wing} from "@/app/components/variables";
 import {useEffect} from "react";
 import {ISlotSearchParams} from "@/models/slots";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
+import * as sea from "node:sea";
 
 export function SlotFilterOptions() {
     const searchParams = useSearchParams();
     const pathname = usePathname();
     const {replace} = useRouter();
 
-    const defaultValues = Array.from(searchParams.entries()).reduce((acc, [key, value]) => {
-        acc[key as keyof ISlotSearchParams] = value;
-        return acc;
-    }, {} as ISlotSearchParams);
-
+    const defaultValues = {
+        slot:searchParams.get("slot") || "",
+        startDate: searchParams.get("startDate") || "",
+        endDate: searchParams.get("endDate") || "",
+        region: searchParams.get("region") || "",
+        mandal: searchParams.get("mandal") || "",
+        wing: searchParams.get("wing") || "",
+    }
     const {control, resetField, handleSubmit, watch, register} = useForm<ISlotSearchParams>({
-        defaultValues: defaultValues,
+         defaultValues: defaultValues,
     })
 
     const startDate = watch("startDate");
@@ -40,16 +44,19 @@ export function SlotFilterOptions() {
 
     const onSubmit = (data: ISlotSearchParams) => {
         const params = new URLSearchParams(searchParams);
+
         for (const key in data) {
             const value = data[key as keyof ISlotSearchParams];
-            console.log(`key: ${key}, value: ${JSON.stringify(value)}`)
+
             if (!!value) {
                 params.set(key, value);
             } else {
                 params.delete(key);
             }
         }
-        replace(`${pathname}?${params.toString()}`);
+
+
+        replace(`${pathname}?${params.toString()}`)
     }
 
     return (
@@ -69,7 +76,7 @@ export function SlotFilterOptions() {
                         <div>
                             <label htmlFor="endDate" className="inline-block mb-3">End Date</label>
                             <input type="date" className="block rounded h-12" id="endDate"
-                                  {...register("endDate")}/>
+                                   {...register("endDate")}/>
                         </div>
 
                         <div>
