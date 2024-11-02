@@ -4,7 +4,6 @@ import {mandals, regions, wing} from "@/app/components/variables";
 import {useEffect} from "react";
 import {ISlotSearchParams} from "@/models/slots";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
-import * as sea from "node:sea";
 
 export function SlotFilterOptions() {
     const searchParams = useSearchParams();
@@ -26,10 +25,6 @@ export function SlotFilterOptions() {
     const startDate = watch("startDate");
     const endDate = watch("endDate");
 
-    function getCurrentDate() {
-        const today = new Date();
-        return today.toISOString().split("T")[0];
-    }
 
     useEffect(() => {
             if (startDate) {
